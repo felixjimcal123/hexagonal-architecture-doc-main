@@ -9,6 +9,7 @@ using GtMotive.Estimate.Microservice.Host.Configuration;
 using GtMotive.Estimate.Microservice.Host.DependencyInjection;
 using GtMotive.Estimate.Microservice.Infrastructure;
 using GtMotive.Estimate.Microservice.Infrastructure.MongoDb.Settings;
+using GtMotive.Estimate.Microservice.Infrastructure.Persistence;
 using IdentityServer4.AccessTokenValidation;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Builder;
@@ -16,6 +17,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
@@ -66,6 +68,9 @@ builder.Services.AddControllers(ApiConfiguration.ConfigureControllers)
     .WithApiControllers();
 
 builder.Services.AddBaseInfrastructure(builder.Environment.IsDevelopment());
+builder.Services.AddRentingPersistence(
+    builder.Configuration.GetConnectionString("Renting") ??
+    throw new InvalidOperationException("ConnectionStrings:Renting must be configured."));
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -95,6 +100,13 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddSwagger(appSettings, builder.Configuration);
 
 var app = builder.Build();
+
+// Create the local SQLite schema once. A file-backed connection preserves it between restarts.
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var database = scope.ServiceProvider.GetRequiredService<RentingDbContext>();
+    await database.Database.EnsureCreatedAsync();
+}
 
 // Logging configuration.
 Log.Logger = builder.Environment.IsDevelopment() ?
