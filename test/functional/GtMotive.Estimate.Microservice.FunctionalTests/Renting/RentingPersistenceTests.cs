@@ -152,7 +152,7 @@ namespace GtMotive.Estimate.Microservice.FunctionalTests.Renting
             await firstScope.ServiceProvider.GetRequiredService<IUnitOfWork>().Save();
 
             staleCopy.Return(StartedAt.AddHours(2));
-            await Assert.ThrowsAsync<DbUpdateConcurrencyException>(async () =>
+            await Assert.ThrowsAsync<ConflictException>(async () =>
             {
                 await secondScope.ServiceProvider.GetRequiredService<IUnitOfWork>().Save();
             });
