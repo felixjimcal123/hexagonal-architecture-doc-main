@@ -148,7 +148,19 @@ dotnet test .\src\microservice.sln
 | `test/infrastructure/GtMotive.Estimate.Microservice.InfrastructureTests` | 4 | Test host receiving HTTP requests and validating request models, not full end-to-end business flows |
 | **Total** | **49** | **49 passed, 0 failed, 0 skipped** in the clean-clone checkpoint |
 
-The three categories deliberately match the definitions in the original technical-test PDF. There is also a separately verified manual HTTP lifecycle, and a manual test showing that a vehicle survives a complete Host stop/restart. Neither is misrepresented as an additional automated test.
+The three categories deliberately match the definitions in the original technical-test PDF. An HTTP lifecycle and a Host restart were first checked manually; the delivery script below now also verifies these scenarios automatically. They are **not** additional xUnit tests.
+
+### One-command delivery verification (Windows PowerShell)
+
+From the **repository root**, run:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify-delivery.ps1
+```
+
+The script runs the full local acceptance sequence: validate SDK **9.0.200**, restore dependencies, rebuild all eight projects non-incrementally with the configured analyzers, run the **49 xUnit tests** (unit, functional and infrastructure), start the real HTTP Host, check Swagger and the REST lifecycle (including `400`, `404`, `409`, vehicle availability, renting and returns), restart the Host, and verify SQLite persistence and rental history. The verified run completed **39 script checks** in addition to the 49 xUnit tests; these are different counts, not 88 xUnit tests.
+
+For isolation, it uses an automatically selected local port and a **temporary SQLite file**, not the normal `renting.db`. It stops the Host processes it started and removes the temporary database on exit. Test-result `.trx` files and Host stdout/stderr logs are retained in a unique directory under **`$env:TEMP\gt-motive-delivery-*`**; the console prints the exact `Reports:` path at the beginning and end. A failing step stops the verification and reports an error rather than declaring success. The script was verified on Windows PowerShell; it is not presented as a cross-platform CI pipeline.
 
 ## Decisions, costs and limits
 
@@ -167,4 +179,4 @@ The three categories deliberately match the definitions in the original technica
 
 ## Reproducibility evidence
 
-The delivery checkpoint was verified from a fresh GitHub clone at commit **`780f027`** using SDK **9.0.200**: restore succeeded, all eight solution projects built, and **49/49 automated tests passed**. Running the Host on `http://localhost:5080` exposed all four Swagger operations. A vehicle created through HTTP remained present with the same identifier after the Host was stopped and restarted using the same working directory.
+The delivery checkpoint was verified from a fresh GitHub clone at commit **`780f027`** using SDK **9.0.200**: restore succeeded, all eight solution projects built, and **49/49 automated tests passed**. Running the Host on `http://localhost:5080` exposed all four Swagger operations. A vehicle created through HTTP remained present with the same identifier after the Host was stopped and restarted using the same working directory. After restoring the code-style build settings, another local run verified **49/49 tests**; the delivery script added in commit **`ce3e814`** then completed **39/39 checks**, including HTTP conflict handling and SQLite survival across a Host restart.
