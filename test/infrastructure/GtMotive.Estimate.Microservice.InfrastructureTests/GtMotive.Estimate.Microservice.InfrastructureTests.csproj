@@ -9,6 +9,7 @@
 
     <ItemGroup>
         <PackageReference Include="Acheve.TestHost" />
+        <PackageReference Include="Microsoft.AspNetCore.TestHost" />
     </ItemGroup>
 
     <ItemGroup>

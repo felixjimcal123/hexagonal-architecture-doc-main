@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using GtMotive.Estimate.Microservice.ApplicationCore.Exceptions;
+using GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Vehicles;
 using GtMotive.Estimate.Microservice.Domain.Entities;
 using GtMotive.Estimate.Microservice.Domain.Interfaces;
 using GtMotive.Estimate.Microservice.Infrastructure.Persistence;
@@ -79,7 +81,7 @@ namespace GtMotive.Estimate.Microservice.FunctionalTests.Renting
             var rentals = scope.ServiceProvider.GetRequiredService<IRentalRepository>();
             await rentals.AddAsync(Rental.Start(Guid.NewGuid(), vehicleId, "client-2", StartedAt));
 
-            await Assert.ThrowsAsync<DbUpdateException>(async () =>
+            await Assert.ThrowsAsync<ConflictException>(async () =>
             {
                 await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().Save();
             });
@@ -96,7 +98,7 @@ namespace GtMotive.Estimate.Microservice.FunctionalTests.Renting
             var rentals = scope.ServiceProvider.GetRequiredService<IRentalRepository>();
             await rentals.AddAsync(Rental.Start(Guid.NewGuid(), otherVehicleId, "client-1", StartedAt));
 
-            await Assert.ThrowsAsync<DbUpdateException>(async () =>
+            await Assert.ThrowsAsync<ConflictException>(async () =>
             {
                 await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().Save();
             });
@@ -166,10 +168,34 @@ namespace GtMotive.Estimate.Microservice.FunctionalTests.Renting
             await vehicles.AddAsync(Vehicle.Register(
                 Guid.NewGuid(), "1200 abc", "Brand", "Model", new DateOnly(2024, 1, 1), Today));
 
-            await Assert.ThrowsAsync<DbUpdateException>(async () =>
+            await Assert.ThrowsAsync<ConflictException>(async () =>
             {
                 await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().Save();
             });
+        }
+
+        [Fact]
+        public async Task CreateAndListVehicleUseCasesPersistAcrossScopes()
+        {
+            var manufacturedOn = DateOnly.FromDateTime(TimeProvider.System.GetUtcNow().UtcDateTime).AddYears(-1);
+
+            await using (var firstScope = _provider.CreateAsyncScope())
+            {
+                var register = new CreateVehicleUseCase(
+                    firstScope.ServiceProvider.GetRequiredService<IVehicleRepository>(),
+                    firstScope.ServiceProvider.GetRequiredService<IUnitOfWork>(),
+                    TimeProvider.System);
+                var vehicle = await register.ExecuteAsync("5555 abc", "Example", "Model", manufacturedOn);
+                Assert.Equal("5555ABC", vehicle.LicensePlate);
+            }
+
+            await using var secondScope = _provider.CreateAsyncScope();
+            var list = new ListAvailableVehiclesUseCase(
+                secondScope.ServiceProvider.GetRequiredService<IVehicleRepository>(),
+                TimeProvider.System);
+            var available = await list.ExecuteAsync();
+            Assert.Single(available);
+            Assert.Equal("5555ABC", available[0].LicensePlate);
         }
 
         private async Task<Guid> RegisterVehicleAsync(
