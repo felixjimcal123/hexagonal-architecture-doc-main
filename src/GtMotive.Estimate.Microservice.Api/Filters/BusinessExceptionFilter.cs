@@ -24,6 +24,12 @@ namespace GtMotive.Estimate.Microservice.Api.Filters
                 context.Result = new ConflictObjectResult(problem);
                 context.ExceptionHandled = true;
             }
+            else if (context.Exception is NotFoundException)
+            {
+                var problem = NewProblem(context, StatusCodes.Status404NotFound, "Not Found");
+                context.Result = new NotFoundObjectResult(problem);
+                context.ExceptionHandled = true;
+            }
             else if (context.Exception is DomainException)
             {
                 var problem = NewProblem(context, StatusCodes.Status400BadRequest, "Bad Request");

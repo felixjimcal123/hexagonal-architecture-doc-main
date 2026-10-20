@@ -14,6 +14,11 @@ namespace GtMotive.Estimate.Microservice.Infrastructure.Persistence
             {
                 return await context.SaveChangesAsync();
             }
+            catch (DbUpdateConcurrencyException exception)
+            {
+                // Two requests tried to return the same rental from stale snapshots.
+                throw new ConflictException("The rental was modified by another request.", exception);
+            }
             catch (DbUpdateException exception) when (exception.InnerException is SqliteException { SqliteExtendedErrorCode: 2067 })
             {
                 // SQLITE_CONSTRAINT_UNIQUE: SQLite enforces the invariant under concurrent requests.

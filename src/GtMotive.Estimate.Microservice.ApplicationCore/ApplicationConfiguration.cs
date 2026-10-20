@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Rentals;
 using GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Vehicles;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -25,6 +26,8 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore
             services.AddSingleton(TimeProvider.System);
             services.AddScoped<CreateVehicleUseCase>();
             services.AddScoped<ListAvailableVehiclesUseCase>();
+            services.AddScoped<RentVehicleUseCase>();
+            services.AddScoped<ReturnVehicleUseCase>();
             return services;
         }
     }
