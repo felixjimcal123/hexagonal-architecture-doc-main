@@ -95,7 +95,7 @@
         <PackageReference Update="xunit.runner.visualstudio" Version="3.0.2" />
         <PackageReference Update="FluentAssertions" Version="7.0.0" />
         <PackageReference Update="coverlet.collector" Version="6.0.4" />
-        <PackageReference Update="Microsoft.AspNetCore.TestHost" Version="6.0.0" />
+        <PackageReference Update="Microsoft.AspNetCore.TestHost" Version="9.0.3" />
         <PackageReference Update="Acheve.TestHost" Version="4.0.0" />
         <PackageReference Update="Microsoft.Extensions.Hosting" Version="6.0.0" />
         <PackageReference Update="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
