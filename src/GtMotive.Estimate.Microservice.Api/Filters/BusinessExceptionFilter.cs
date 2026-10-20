@@ -1,4 +1,5 @@
 ﻿using System;
+using GtMotive.Estimate.Microservice.ApplicationCore.Exceptions;
 using GtMotive.Estimate.Microservice.Domain;
 using GtMotive.Estimate.Microservice.Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -14,41 +15,40 @@ namespace GtMotive.Estimate.Microservice.Api.Filters
         public void OnException(ExceptionContext context)
         {
             ArgumentNullException.ThrowIfNull(context);
-
             _appLogger.LogError(context.Exception, "Exception captured in BusinessExceptionFilter.");
 
-            if (context.Exception is DomainException)
+            if (context.Exception is ConflictException)
             {
-                var problemDetails = new ProblemDetails
-                {
-                    Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
-                    Status = StatusCodes.Status400BadRequest,
-                    Title = "Bad Request",
-                    Detail = context.Exception.Message,
-                    Instance = context.HttpContext.Request.Path,
-                };
-
-                _appLogger.LogWarning("Domain Exception: {status} - {detail}", problemDetails.Status, problemDetails.Detail);
-
-                context.Result = new BadRequestObjectResult(problemDetails);
-                context.Exception = null;
+                var problem = NewProblem(context, StatusCodes.Status409Conflict, "Conflict");
+                _appLogger.LogWarning("Conflict: {status} - {detail}", problem.Status, problem.Detail);
+                context.Result = new ConflictObjectResult(problem);
+                context.ExceptionHandled = true;
+            }
+            else if (context.Exception is DomainException)
+            {
+                var problem = NewProblem(context, StatusCodes.Status400BadRequest, "Bad Request");
+                _appLogger.LogWarning("Domain Exception: {status} - {detail}", problem.Status, problem.Detail);
+                context.Result = new BadRequestObjectResult(problem);
+                context.ExceptionHandled = true;
             }
             else
             {
-                var problemDetails = new ProblemDetails
-                {
-                    Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1",
-                    Status = StatusCodes.Status500InternalServerError,
-                    Title = "Internal Server Error",
-                    Detail = context.Exception.Message,
-                    Instance = context.HttpContext.Request.Path,
-                };
-
+                var problem = NewProblem(context, StatusCodes.Status500InternalServerError, "Internal Server Error");
                 _appLogger.LogError(context.Exception, "Unhandled Exception");
-
-                context.Result = new InternalServerErrorObjectResult(problemDetails);
-                context.Exception = null;
+                context.Result = new InternalServerErrorObjectResult(problem);
+                context.ExceptionHandled = true;
             }
+        }
+
+        private static ProblemDetails NewProblem(ExceptionContext context, int statusCode, string title)
+        {
+            return new ProblemDetails
+            {
+                Status = statusCode,
+                Title = title,
+                Detail = statusCode == StatusCodes.Status500InternalServerError ? "An unexpected error occurred." : context.Exception.Message,
+                Instance = context.HttpContext.Request.Path,
+            };
         }
     }
 }
