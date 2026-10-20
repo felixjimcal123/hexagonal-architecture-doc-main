@@ -123,8 +123,8 @@ csharp_preserve_single_line_blocks = true
 # Diagnostic configuration    #
 ###############################
 dotnet_analyzer_diagnostic.severity = error
-# Temporary: coding style must not block GT Motive delivery (quality and security analysis remains enabled).
-dotnet_analyzer_diagnostic.category-Style.severity = none
+# IDE code-style warnings are enforced during build; quality and security analyzers remain enabled.
+dotnet_analyzer_diagnostic.category-Style.severity = warning
 #IDE
 dotnet_diagnostic.IDE0022.severity = silent
 dotnet_diagnostic.IDE0058.severity = none

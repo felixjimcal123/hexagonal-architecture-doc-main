@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-    <!-- Temporary for GT Motive deadline: skip IDE code-style diagnostics during build. -->
-    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <!-- Enforce IDE code-style diagnostics alongside quality analyzers. -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
   </PropertyGroup>

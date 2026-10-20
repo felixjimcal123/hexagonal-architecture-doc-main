@@ -2,8 +2,8 @@
 
   <PropertyGroup>
       <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-      <!-- Temporary for GT Motive deadline: build should not enforce formatting conventions. -->
-      <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+      <!-- Enforce IDE code-style diagnostics in test projects. -->
+      <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
       <WarningsAsErrors />
   </PropertyGroup>
